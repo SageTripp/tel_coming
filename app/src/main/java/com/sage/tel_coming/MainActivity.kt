@@ -11,15 +11,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        UI {
-            verticalLayout {
-                button ("选择铃声") {
-                    backgroundColor = R.color.colorAccent
-                }
-                button("播放模式") {
-                    backgroundColor = R.color.accent_material_light
-                }
+        setContentView(verticalLayout {
+            button ("选择铃声") {
+                backgroundColor = R.color.colorAccent
             }
-        }
+            button("播放模式") {
+                backgroundColor = R.color.accent_material_light
+            }
+        })
+
     }
 }
