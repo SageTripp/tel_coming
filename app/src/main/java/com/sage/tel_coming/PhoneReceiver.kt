@@ -50,9 +50,10 @@ class PhoneReceiver : BroadcastReceiver() {
                         val name = hasLinkMan(context, coming)
                         println("coming = $coming")
                         println("name = $name")
-                        context.audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
-                        mSpeechSynthesizer.speak(if (name.isEmpty()) coming else "有电话来自 $name")
-                        context.audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
+                        context.audioManager.setStreamMute(AudioManager.STREAM_RING, true);
+                        val msp = mSpeechSynthesizer.speak(if (name.isEmpty()) coming else "有电话来自 $name")
+                        println("msp = ${msp}")
+                        context.audioManager.setStreamMute(AudioManager.STREAM_RING, false);
                     }
 
                 }
@@ -111,13 +112,16 @@ class PhoneReceiver : BroadcastReceiver() {
         mSpeechSynthesizer.setParam(SpeechSynthesizer.PARAM_TTS_SPEECH_MODEL_FILE, "$mSampleDirPath/$SPEECH_FEMALE_MODEL_NAME");
         // 设置语音合成声音授权文件
         //        mSpeechSynthesizer.setParam(SpeechSynthesizer.PARAM_TTS_LICENCE_FILE, "$mSampleDirPath/$LICENSE_FILE_NAME");
+        mSpeechSynthesizer.setParam(SpeechSynthesizer.PARAM_MIX_MODE, SpeechSynthesizer.MIX_MODE_DEFAULT);
         // 获取语音合成授权信息
         var authInfo = mSpeechSynthesizer.auth(TtsMode.MIX);
         // 判断授权信息是否正确，如果正确则初始化语音合成器并开始语音合成，如果失败则做错误处理
         if (authInfo.isSuccess()) {
             println("授权成功")
             mSpeechSynthesizer.initTts(TtsMode.MIX);
-            mSpeechSynthesizer.speak("百度语音合成示例程序正在运行");
+            mSpeechSynthesizer.loadModel("$mSampleDirPath/$SPEECH_FEMALE_MODEL_NAME","$mSampleDirPath/$TEXT_MODEL_NAME")
+            val sp = mSpeechSynthesizer.speak("百度语音合成示例程序正在运行");
+            println("sp = ${sp}")
         } else {
             // 授权失败
             println("授权失败")
