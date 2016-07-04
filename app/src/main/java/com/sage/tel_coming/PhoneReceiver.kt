@@ -7,7 +7,9 @@ import android.media.AudioManager
 import android.os.Environment
 import android.provider.ContactsContract
 import android.telephony.TelephonyManager
+import com.baidu.tts.client.SpeechError
 import com.baidu.tts.client.SpeechSynthesizer
+import com.baidu.tts.client.SpeechSynthesizerListener
 import com.baidu.tts.client.TtsMode
 import org.jetbrains.anko.audioManager
 import org.jetbrains.anko.telephonyManager
@@ -32,28 +34,35 @@ class PhoneReceiver : BroadcastReceiver() {
     }
 
     lateinit var mSpeechSynthesizer: SpeechSynthesizer
+    lateinit var ctx: Context
     private lateinit var mSampleDirPath: String
 
 
     override fun onReceive(context: Context, intent: Intent) {
+        ctx = context
         println("收到广播")
         when (intent.action) {
             Intent.ACTION_NEW_OUTGOING_CALL -> {
                 //拨打电话
             }
             else -> {
-                startTTS(context)
                 println(context.telephonyManager.callState)
+                startTTS(context)
                 when (context.telephonyManager.callState) {
-                    TelephonyManager.CALL_STATE_RINGING -> {
+                    TelephonyManager.CALL_STATE_RINGING -> {//响铃
                         val coming = intent.getStringExtra("incoming_number")
                         val name = hasLinkMan(context, coming)
                         println("coming = $coming")
                         println("name = $name")
-                        context.audioManager.setStreamMute(AudioManager.STREAM_RING, true);
-                        val msp = mSpeechSynthesizer.speak(if (name.isEmpty()) coming else "有电话来自 $name")
-                        println("msp = ${msp}")
-                        context.audioManager.setStreamMute(AudioManager.STREAM_RING, false);
+                        val sb = "有电话来自:${if (name.isEmpty()) coming else name}"
+                        val msp = mSpeechSynthesizer.speak("$sb.     $sb.     $sb.")
+                        println("msp = $msp")
+                    }
+                    TelephonyManager.CALL_STATE_OFFHOOK -> {//接听
+                        mSpeechSynthesizer.stop()
+                    }
+                    TelephonyManager.CALL_STATE_IDLE -> {//挂断
+                        mSpeechSynthesizer.stop()
                     }
 
                 }
@@ -119,11 +128,9 @@ class PhoneReceiver : BroadcastReceiver() {
         if (authInfo.isSuccess()) {
             println("授权成功")
             mSpeechSynthesizer.initTts(TtsMode.MIX);
-            mSpeechSynthesizer.loadModel("$mSampleDirPath/$SPEECH_FEMALE_MODEL_NAME","$mSampleDirPath/$TEXT_MODEL_NAME")
-            val sp = mSpeechSynthesizer.speak("百度语音合成示例程序正在运行");
-            println("sp = ${sp}")
+            mSpeechSynthesizer.loadModel("$mSampleDirPath/$SPEECH_FEMALE_MODEL_NAME", "$mSampleDirPath/$TEXT_MODEL_NAME")
+            mSpeechSynthesizer.setSpeechSynthesizerListener(listener)
         } else {
-            // 授权失败
             println("授权失败")
         }
     }
@@ -198,5 +205,33 @@ class PhoneReceiver : BroadcastReceiver() {
         }
     }
 
+    private val listener = object : SpeechSynthesizerListener {
+        override fun onSpeechFinish(p0: String) {
+            println("结束")
+            ctx.audioManager.setStreamVolume(AudioManager.STREAM_RING, ctx.audioManager.getStreamMaxVolume(AudioManager.STREAM_RING), 0)
+        }
+
+        override fun onSpeechProgressChanged(p0: String, p1: Int) {
+        }
+
+        override fun onSynthesizeStart(p0: String) {
+        }
+
+        override fun onSynthesizeFinish(p0: String) {
+        }
+
+        override fun onSpeechStart(p0: String) {
+            println("开始")
+            ctx.audioManager.setStreamVolume(AudioManager.STREAM_RING, 3, 0)
+            ctx.audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, ctx.audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0)
+        }
+
+        override fun onSynthesizeDataArrived(p0: String, p1: ByteArray, p2: Int) {
+        }
+
+        override fun onError(p0: String, p1: SpeechError) {
+            ctx.audioManager.setStreamVolume(AudioManager.STREAM_RING, ctx.audioManager.getStreamMaxVolume(AudioManager.STREAM_RING), 0)
+        }
+    }
 
 }
