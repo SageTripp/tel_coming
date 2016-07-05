@@ -72,9 +72,9 @@ class PhoneReceiver : BroadcastReceiver() {
 
     fun getLinkMan(ctx: Context): ArrayList<LinkMan> {
         println("获取联系人")
-        var linkMans = ArrayList<LinkMan>()
+        val linkMans = ArrayList<LinkMan>()
         var name = ""
-        var phones = ArrayList<String>()
+        val phones = ArrayList<String>()
         val cr = ctx.contentResolver
         val cursor = cr.query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null)
         while (cursor.moveToNext()) {
@@ -125,7 +125,7 @@ class PhoneReceiver : BroadcastReceiver() {
         // 获取语音合成授权信息
         var authInfo = mSpeechSynthesizer.auth(TtsMode.MIX);
         // 判断授权信息是否正确，如果正确则初始化语音合成器并开始语音合成，如果失败则做错误处理
-        if (authInfo.isSuccess()) {
+        if (authInfo.isSuccess) {
             println("授权成功")
             mSpeechSynthesizer.initTts(TtsMode.MIX);
             mSpeechSynthesizer.loadModel("$mSampleDirPath/$SPEECH_FEMALE_MODEL_NAME", "$mSampleDirPath/$TEXT_MODEL_NAME")
